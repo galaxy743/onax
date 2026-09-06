@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ONAX ADMIN</title>
+<style>
+*{box-sizing:border-box}
+body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#050505;
+    color:white;
+    font-family:Arial,sans-serif
+}
+.box{
+    width:90%;
+    max-width:400px;
+    padding:25px;
+    background:#111;
+    border:1px solid #292929;
+    border-radius:18px
+}
+h1{
+    text-align:center;
+    margin:0 0 8px
+}
+p{
+    text-align:center;
+    color:#888;
+    margin-bottom:25px
+}
+input{
+    width:100%;
+    padding:15px;
+    background:#080808;
+    color:white;
+    border:1px solid #333;
+    border-radius:10px;
+    outline:none;
+    font-size:16px
+}
+button{
+    width:100%;
+    padding:15px;
+    margin-top:12px;
+    border:0;
+    border-radius:10px;
+    background:white;
+    color:black;
+    font-weight:bold;
+    font-size:16px
+}
+#error{
+    text-align:center;
+    color:#ff4444;
+    margin-top:15px
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <h1>🔐 ONAX ADMIN</h1>
+    <p>Đăng nhập để quản lý Key</p>
+
+    <input
+        type="password"
+        id="key"
+        placeholder="Nhập Admin Key"
+    >
+
+    <button onclick="login()">ĐĂNG NHẬP</button>
+
+    <div id="error"></div>
+</div>
+
+<script>
+async function login(){
+    const key=document.getElementById("key").value.trim();
+    const error=document.getElementById("error");
+
+    if(!key){
+        error.innerText="❌ Vui lòng nhập Admin Key";
+        return;
+    }
+
+    try{
+        const res=await fetch("/api/admin/login",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({key:key})
+        });
+
+        const data=await res.json();
+
+        if(data.success){
+            location.href="/";
+        }else{
+            error.innerText="❌ "+(data.error||"Sai Admin Key");
+        }
+
+    }catch(e){
+        error.innerText="❌ Không kết nối được Server";
+    }
+}
+</script>
+
+</body>
+</html>
