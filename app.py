@@ -10,24 +10,29 @@ app.secret_key = "onax-session-2026"
 KEY_FILE = "keys.json"
 ADMIN_KEY = "vanloconax24"
 
+
 def load_keys():
     if not os.path.exists(KEY_FILE):
         return {}
+
     try:
         with open(KEY_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except:
         return {}
 
+
 def save_keys(keys):
     with open(KEY_FILE, "w", encoding="utf-8") as f:
         json.dump(keys, f, indent=2)
+
 
 @app.route("/")
 def index():
     if not session.get("admin_login"):
         return render_template("login.html")
     return render_template("index.html")
+
 
 @app.route("/api/admin/login", methods=["POST"])
 def admin_login():
@@ -43,10 +48,12 @@ def admin_login():
     session["admin_login"] = True
     return jsonify({"success": True})
 
+
 @app.route("/api/admin/logout")
 def admin_logout():
     session.clear()
     return jsonify({"success": True})
+
 
 @app.route("/api/create_key")
 def create_key():
@@ -58,11 +65,13 @@ def create_key():
 
     try:
         days = int(request.args.get("days", "1"))
+
         if days <= 0:
             return jsonify({
                 "success": False,
                 "error": "Số ngày không hợp lệ"
             }), 400
+
     except:
         return jsonify({
             "success": False,
@@ -72,12 +81,14 @@ def create_key():
     key = "ONAX-" + secrets.token_hex(8).upper()
 
     keys = load_keys()
+
     keys[key] = {
         "days": days,
         "created": int(time.time()),
         "activated": False,
         "activated_at": None
     }
+
     save_keys(keys)
 
     return jsonify({
@@ -85,6 +96,34 @@ def create_key():
         "key": key,
         "days": days
     })
+
+
+# API cho trang getkey.html
+# Lấy một Key đã tạo sẵn nhưng chưa được sử dụng
+@app.route("/api/get_key")
+def get_key():
+    keys = load_keys()
+
+    for key, data in keys.items():
+
+        if not data.get("activated", False):
+
+            # Key lấy từ trang Link4m có thời hạn 1 ngày
+            data["days"] = 1
+
+            save_keys(keys)
+
+            return jsonify({
+                "success": True,
+                "key": key,
+                "days": 1
+            })
+
+    return jsonify({
+        "success": False,
+        "error": "Hết Key"
+    }), 404
+
 
 @app.route("/api/check_key")
 def check_key():
@@ -110,8 +149,10 @@ def check_key():
     now = int(time.time())
 
     if not data.get("activated", False):
+
         data["activated"] = True
         data["activated_at"] = now
+
         save_keys(keys)
 
         expires = now + data["days"] * 86400
@@ -145,12 +186,14 @@ def check_key():
         "remaining": expires - now
     })
 
+
 @app.route("/api/status")
 def status():
     return jsonify({
         "online": True,
         "time": int(time.time())
     })
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
